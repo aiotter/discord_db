@@ -27,35 +27,47 @@ class DiscordDBHandler:
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    def get_db(self, guild: typing.Union[int, str]) -> DataBase:
+    def get_db(self, guild: typing.Union[int, str]):
         """Get DataBase object -- wrapper of discord.Guild.
 
         Parameters
         ----------
         guild : int, str, discord.Guild
             id or name of the guild to wrap
+
+        Returns
+        -------
+        database : DataBase
         """
         return DataBase.get(self.bot, guild)
 
-    def get_table(self, category_id: int) -> Table:
+    def get_table(self, category_id: int):
         """Get Table object -- wrapper of discord.CategoryChannel.
 
         Parameters
         ----------
         category_id : int
             id of the category to wrap
+
+        Returns
+        -------
+        table : Table
         """
         category = self.bot.get_channel(category_id)
         assert isinstance(category, discord.CategoryChannel)
         return Table(self.bot, category)
 
-    def get_record(self, channel_id: int) -> Record:
+    def get_record(self, channel_id: int):
         """Get Record object -- wrapper of discord.TextChannel.
 
         Parameters
         ----------
         channel_id : int
             id of the channel to wrap
+
+        Returns
+        -------
+        record : Record
         """
         channel = self.bot.get_channel(channel_id)
         assert isinstance(channel, discord.TextChannel)
@@ -69,7 +81,7 @@ class DataBase:
         self.guild = guild
 
     @classmethod
-    def get(cls, bot: commands.Bot, guild: typing.Union[int, str, discord.Guild]) -> DataBase:
+    def get(cls, bot: commands.Bot, guild: typing.Union[int, str, discord.Guild]):
         if isinstance(guild, discord.Guild):
             pass
         elif isinstance(guild, int):
@@ -82,7 +94,7 @@ class DataBase:
             raise TypeError
         return cls(bot, guild)
 
-    def tables(self) -> typing.Generator[Table]:
+    def tables(self):
         """Get the list of the Tables under this DataBase.
 
         Returns
@@ -92,7 +104,7 @@ class DataBase:
         """
         return (Table.get(self.bot, self, c) for c in self.guild.channels if isinstance(c, discord.CategoryChannel))
 
-    def get_table(self, *args) -> Table:
+    def get_table(self, *args):
         """Get the Table of the specified category.
 
         Parameters
@@ -105,7 +117,7 @@ class DataBase:
         """
         return Table.get(self.bot, self, *args)
 
-    async def create_table(self, *args) -> Table:
+    async def create_table(self, *args):
         """Create a new Table under this DataBase
 
         Parameters
@@ -130,7 +142,7 @@ class Table:
         self.db = DataBase.get(bot, category.guild)
 
     @classmethod
-    def get(cls, bot: commands.Bot, db: DataBase, category: typing.Union[int, str, discord.CategoryChannel]) -> Table:
+    def get(cls, bot: commands.Bot, db: DataBase, category: typing.Union[int, str, discord.CategoryChannel]):
         if isinstance(category, int):
             # idによる指定
             category = bot.get_channel(category)
@@ -145,7 +157,7 @@ class Table:
         return cls(bot, category)
 
     @classmethod
-    async def create(cls, bot: commands.Bot, db: DataBase, name: str, reason: str = None) -> Table:
+    async def create(cls, bot: commands.Bot, db: DataBase, name: str, reason: str = None):
         category = await db.guild.create_category_channel(name, reason=reason)
         return cls(bot, category)
 
@@ -159,7 +171,7 @@ class Table:
         """
         return (Record.get(self.bot, self, c) for c in self.category.channels if isinstance(c, discord.TextChannel))
 
-    def get_record(self, *args) -> Record:
+    def get_record(self, *args):
         """Get the Record of the specified channel.
 
         Parameters
@@ -172,7 +184,7 @@ class Table:
         """
         return Record.get(self.bot, self, *args)
 
-    async def create_record(self, *args) -> Record:
+    async def create_record(self, *args):
         """Create a new Record under this Table
 
         Parameters
@@ -188,6 +200,10 @@ class Table:
         """
         return await Record.create(self.bot, self, *args)
 
+    async def insert(self, *args):
+        """alias to `create_record()`"""
+        return await self.create_record(*args)
+
 
 class Record:
     # Discordのテキストチャンネルをラップするクラス
@@ -197,7 +213,7 @@ class Record:
         self.table = Table.get(bot, DataBase.get(bot, channel.guild), channel.category)
 
     @classmethod
-    def get(cls, bot: commands.Bot, table: Table, channel: typing.Union[int, str, discord.TextChannel]) -> Record:
+    def get(cls, bot: commands.Bot, table: Table, channel: typing.Union[int, str, discord.TextChannel]):
         if isinstance(channel, int):
             # idによる指定
             channel = bot.get_channel(channel)
@@ -214,7 +230,7 @@ class Record:
         return cls(bot, channel)
 
     @classmethod
-    async def create(cls, bot: commands.Bot, table: Table, name: str, reason: str = None) -> Record:
+    async def create(cls, bot: commands.Bot, table: Table, name: str, reason: str = None):
         channel = await table.category.create_text_channel(name, reason=reason)
         return cls(bot, channel)
 
@@ -225,5 +241,5 @@ class Record:
     async def value(self):
         return (await self.message()).content
 
-    async def insert(self, content: str) -> discord.Message:
+    async def insert(self, content: str):
         return await self.channel.send(content)
