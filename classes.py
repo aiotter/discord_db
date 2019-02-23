@@ -80,6 +80,9 @@ class DataBase:
         self.bot = bot
         self.guild = guild
 
+    def __getattr__(self, item):
+        return getattr(self.guild, item)
+
     @classmethod
     def get(cls, bot: commands.Bot, guild: typing.Union[int, str, discord.Guild]):
         if isinstance(guild, discord.Guild):
@@ -140,6 +143,9 @@ class Table:
         self.bot = bot
         self.category = category
         self.db = DataBase.get(bot, category.guild)
+
+    def __getattr__(self, item):
+        return getattr(self.db, item)
 
     @classmethod
     def get(cls, bot: commands.Bot, db: DataBase, category: typing.Union[int, str, discord.CategoryChannel]):
@@ -211,6 +217,9 @@ class Record:
         self.bot = bot
         self.channel = channel
         self.table = Table.get(bot, DataBase.get(bot, channel.guild), channel.category)
+
+    def __getattr__(self, item):
+        return getattr(self.channel, item)
 
     @classmethod
     def get(cls, bot: commands.Bot, table: Table, channel: typing.Union[int, str, discord.TextChannel]):
