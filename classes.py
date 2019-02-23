@@ -240,7 +240,7 @@ class Record:
 
     @classmethod
     async def create(cls, bot: commands.Bot, table: Table, name: str, reason: str = None):
-        channel = await table.category.create_text_channel(name, reason=reason)
+        channel = await table.category.guild.create_text_channel(name, category=table.category, reason=reason)
         return cls(bot, channel)
 
     async def message(self):
