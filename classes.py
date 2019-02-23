@@ -90,6 +90,7 @@ class DataBase:
         elif isinstance(guild, int):
             # idによる指定
             guild = bot.get_guild(guild)
+            assert guild
         elif isinstance(guild, str):
             # 名前による指定
             guild = next(g for g in bot.guilds if g.name == guild)
@@ -223,7 +224,9 @@ class Record:
 
     @classmethod
     def get(cls, bot: commands.Bot, table: Table, channel: typing.Union[int, str, discord.TextChannel]):
-        if isinstance(channel, int):
+        if isinstance(channel, discord.TextChannel):
+            pass
+        elif isinstance(channel, int):
             # idによる指定
             channel = bot.get_channel(channel)
         elif isinstance(channel, str):
@@ -231,11 +234,10 @@ class Record:
             channel = next(
                 c for c in table.category.channels if c.name == channel and isinstance(c, discord.TextChannel))
         else:
-            record.channel = None
+            raise TypeError(f"{type(channel)} is not int, str or discord.TextChannel")
 
         # record.categoryがテキストチャンネルであることを確認
-        if not isinstance(channel, discord.TextChannel):
-            raise TypeError
+        assert isinstance(channel, discord.TextChannel), f"Channel not found"
         return cls(bot, channel)
 
     @classmethod
